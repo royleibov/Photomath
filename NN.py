@@ -134,7 +134,6 @@ class Network:
 
 def save_network(NN):
     data = {
-        "size": NN.size,
         "layers": NN.layers,
         "weights": [w.tolist() for w in NN.weights],
         "biases": [b.tolist() for b in NN.biases]
@@ -145,7 +144,10 @@ def save_network(NN):
 
 def load_network(file):
     with open(file, "r") as net_file:
-        net = json.load(net_file)
+        data = json.load(net_file)
+    net = Network(data["layers"])
+    net.weights = [np.array(w) for w in data["weights"]]
+    net.biases = [np.array(b) for b in data["biases"]]
 
     return net
         
