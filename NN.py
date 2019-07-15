@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 import gzip
 import random
+import json
 
 def load_data(path):
     # Unpickle data
@@ -122,13 +123,19 @@ class Network:
 
 
 def save_network(NN):
-    with open("NeuralNetwork.pkl", "wb") as net_file:
-        pickle.dump(NN, net_file)
+    data = {
+        "size": NN.size,
+        "layers": NN.layers,
+        "weights": [w.tolist() for w in NN.weights],
+        "biases": [b.tolist() for b in NN.biases]
+    }
+    with open("NeuralNetwork.json", "w") as net_file:
+        json.dump(data, net_file)
 
 
 def load_network(file):
-    with open(file, "rb") as net_file:
-        net = pickle.load(net_file)
+    with open(file, "r") as net_file:
+        net = json.load(net_file)
 
     return net
         
