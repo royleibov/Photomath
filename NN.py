@@ -43,27 +43,25 @@ class Network:
             epoch_cost = []
 
             n = len(train)
+            # Aquire mini batches as specified by mini_batch_size
             mini_batches = [train[k:k + mini_batch_size] for k in range(0, n, mini_batch_size)]
-            # random.shuffle(mini_batches)
 
             for mini_batch in mini_batches:
+                # Initialize the delta weights and biases
                 delta_weights_sum = [np.zeros(w.shape) for w in self.weights]
                 delta_biases_sum = [np.zeros(b.shape) for b in self.biases]
 
                 for m in range(len(mini_batch)):
                     # Definitions
                     batchX = mini_batch[m][0]
-                    # print(batchX)
                     batchY = mini_batch[m][1]
 
                     # Feed the data forwards and remember each input to layer -> x
                     x = []
                     a = batchX
-                    # print(a)
                     x.append(a)
                     for w, b in zip(self.weights, self.biases):
                         a = sigmoid(np.dot(w, a) + b)
-                        # print(a)
                         x.append(a)
 
                     # Define the loss check
@@ -78,20 +76,6 @@ class Network:
                     loss = 0.5 * np.sum(error**2)
                     epoch_cost.append(loss)
 
-                    # errors = []
-                    # errors.append(error)
-                    # for W in self.weights[1::-1]:
-                    #     error = np.dot(W.T, error)
-                    #     errors.append(error)
-
-                    # for i in range(self.size - 1):
-                    #     derv = (x[-i - 1] * (1 - x[-i - 1])) * errors[i]
-                    #     delta_w = np.dot(derv, x[-2 - i].T)
-                    #     delta_biases.append(derv)
-                    #     delta_weights.append(delta_w)
-                    # delta_weights.reverse()
-                    # delta_biases.reverse()
-
                     derv = error * (x[-1] * (1 - x[-1]))
                     delta_biases.append(derv)
                     delta_weights.append(np.dot(derv, x[-2].T))
@@ -105,14 +89,19 @@ class Network:
                     delta_weights.reverse()
                     delta_biases.reverse()
 
+                    # Sum over all the dw and db
                     delta_weights_sum = [nw+ow for nw, ow in zip(delta_weights, delta_weights_sum)]
                     delta_biases_sum = [nb+ob for nb, ob in zip(delta_biases, delta_biases_sum)]
 
+                # 'Nudge' the weights and biases by the gradient descent
+                # (dividing by the mini_batch_size to average the deltas)
                 self.weights = [w - (eta/mini_batch_size) * delta_weights_sum[j] for j, w in enumerate(self.weights)]
                 self.biases = [b - (eta/mini_batch_size) * delta_biases_sum[j] for j, b in enumerate(self.biases)]
             
+            # Remember the cost
             cost.append(np.average(epoch_cost))
 
+            # Print the current stage of the network
             if test_data:
                 match, n = self.evaluate(test_data)
                 print(f"Epoch #{q+1}: {match} / {n}")
