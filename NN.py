@@ -35,7 +35,7 @@ class Network:
 
         return a
 
-    def fit(self, train, eta, epochs, mini_batch_size, test_data=None):
+    def fit(self, train, eta, lmbda, epochs, mini_batch_size, test_data=None):
         cost = []
         for q in range(epochs):
             random.shuffle(train)
@@ -72,10 +72,10 @@ class Network:
                     delta_weights = []
                     delta_biases = []
 
-                    loss = 0.5 * np.sum(error**2)
+                    loss = np.sum(np.nan_to_num(-y * np.log(guess) - (1 - y) * np.log(1 - guess)))
                     epoch_cost.append(loss)
 
-                    derv = error * (x[-1] * (1 - x[-1]))
+                    derv = error
                     delta_biases.append(derv)
                     delta_weights.append(np.dot(derv, x[-2].T))
 
@@ -93,7 +93,7 @@ class Network:
                     delta_biases_sum = [nb+ob for nb, ob in zip(delta_biases, delta_biases_sum)]
 
                 # 'Nudge' the weights and biases by the gradient descent (dividing by the mini_batch_size to average the deltas)
-                self.weights = [w - (eta/mini_batch_size) * delta_weights_sum[j] for j, w in enumerate(self.weights)]
+                self.weights = [w * (1 - lmbda * eta / n) - (eta / mini_batch_size) * delta_weights_sum[j] for j, w in enumerate(self.weights)]
                 self.biases = [b - (eta/mini_batch_size) * delta_biases_sum[j] for j, b in enumerate(self.biases)]
             
             # Remember the cost
@@ -142,25 +142,25 @@ if __name__ == "__main__":
     # load_data: raw_data -> train, values, test; assumes file path (string!) of pickled gz
     train, valid, test = load_data("mnist.pkl.gz")
 
-    # net = Network([784, 30, 10])
+    net = Network([784, 30, 10])
 
-    # end_cost = net.fit(train, 3.0, epochs=30, mini_batch_size=10, test_data=test)
+    end_cost = net.fit(train, 0.5, 5.0, epochs=30, mini_batch_size=10, test_data=test)
 
-    # save_network(net)
+    save_network(net)
 
-    # plt.figure()
-    # plt.plot(np.arange(0, 30), end_cost)
-    # # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
-    # plt.show()
+    plt.figure()
+    plt.plot(np.arange(0, 30), end_cost)
+    # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
+    plt.show()
 
-    # old_net = load_network("NeuralNetwork.pkl")
-    best_net = load_network("BestNetwork.pkl")
+    # # old_net = load_network("NeuralNetwork.pkl")
+    # best_net = load_network("BestNetwork.pkl")
 
-    # match_o , n = old_net.evaluate(test)
-    match_b , n = best_net.evaluate(test)
+    # # match_o , n = old_net.evaluate(test)
+    # match_b , n = best_net.evaluate(test)
 
-    # print(f"Old: {match_o} / {n}")
-    print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
+    # # print(f"Old: {match_o} / {n}")
+    # print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
 
     # guess = old_net.feedforward(test[58][0])
 
