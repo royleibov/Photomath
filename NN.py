@@ -27,7 +27,6 @@ class Network:
         # Randomize weights and biases: by given 'layers' input
         # corosponding to each layer apart from input
         self.weights = [np.random.randn(y, x) for x, y in zip(layers[:-1], layers[1:])]
-        # print(self.weights[0])
         self.biases = [np.random.randn(y, 1) for y in layers[1:]]
     
     def feedforward(self, a):
