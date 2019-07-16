@@ -43,7 +43,6 @@ def recognize():
         guess = net.feedforward(x)
 
         prediction = np.array2string(np.argmax(guess))
-        print(prediction)
         
         return prediction
     return "Internal server error"
