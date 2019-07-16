@@ -27,7 +27,9 @@ class Network:
         self.layers = layers
         # Randomize weights and biases: by given 'layers' input
         # corosponding to each layer apart from input
+
         self.weights = [np.random.randn(y, x) / np.sqrt(x) for x, y in zip(layers[:-1], layers[1:])]
+
         self.biases = [np.random.randn(y, 1) for y in layers[1:]]
     
     def feedforward(self, a):
@@ -79,6 +81,7 @@ class Network:
                     epoch_cost.append(loss)
 
                     derv = error
+
                     delta_biases.append(derv)
                     delta_weights.append(np.dot(derv, x[-2].T))
 
@@ -95,14 +98,18 @@ class Network:
                     delta_weights_sum = [nw+ow for nw, ow in zip(delta_weights, delta_weights_sum)]
                     delta_biases_sum = [nb+ob for nb, ob in zip(delta_biases, delta_biases_sum)]
 
-                # 'Nudge' the weights and biases by the gradient descent (dividing by the mini_batch_size to average the deltas)
+
+                # 'Nudge' the weights and biases by the gradient descent
+                # (dividing by the mini_batch_size to average the deltas)
                 self.weights = [w * (1 - lmbda * eta / n) - (eta / mini_batch_size) * delta_weights_sum[j] for j, w in enumerate(self.weights)]
+
                 self.biases = [b - (eta/mini_batch_size) * delta_biases_sum[j] for j, b in enumerate(self.biases)]
             
             # Remember the cost
             cost.append(np.average(epoch_cost))
 
             # Print the current stage of the network
+
             if evaluation_data:
                 match, n = self.evaluate(evaluation_data)
                 if match > max_match:
