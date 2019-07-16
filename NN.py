@@ -38,7 +38,7 @@ class Network:
 
         return a
 
-    def fit(self, train, eta, lmbda, epochs, mini_batch_size, evaluation_data = None, no_learning_in = 10, min_eta = 128.0):
+    def fit(self, train, eta, lmbda, epochs, mini_batch_size, evaluation_data = None, no_learning_in = 10, min_eta = 128.0, mu = 0.9, hyper_improve = False):
         cost = []
         max_match = 0
         no_improv = 0
@@ -55,6 +55,9 @@ class Network:
                 # Initialize the delta weights and biases
                 delta_weights_sum = [np.zeros(w.shape) for w in self.weights]
                 delta_biases_sum = [np.zeros(b.shape) for b in self.biases]
+
+                # Momentum initialization
+                v = [np.zeros(w.shape) for w in self.weights]
 
                 for m in range(len(mini_batch)):
                     # Definitions
@@ -99,10 +102,12 @@ class Network:
                     delta_weights_sum = [nw+ow for nw, ow in zip(delta_weights, delta_weights_sum)]
                     delta_biases_sum = [nb+ob for nb, ob in zip(delta_biases, delta_biases_sum)]
 
+                # Calc velocity
+                v = [(mu * v - (eta / mini_batch_size) * dw) for v, dw in zip(v, delta_weights_sum)]
 
                 # 'Nudge' the weights and biases by the gradient descent
                 # (dividing by the mini_batch_size to average the deltas)
-                self.weights = [w * (1 - lmbda * eta / n) - (eta / mini_batch_size) * delta_weights_sum[j] for j, w in enumerate(self.weights)]
+                self.weights = [w * (1 - lmbda * eta / n) + v[j] for j, w in enumerate(self.weights)]
 
                 self.biases = [b - (eta/mini_batch_size) * delta_biases_sum[j] for j, b in enumerate(self.biases)]
             
@@ -113,18 +118,21 @@ class Network:
 
             if evaluation_data:
                 match, n = self.evaluate(evaluation_data)
-                if match > max_match:
-                    max_match = match
-                    no_improv = 0
-                else:
-                    no_improv += 1
-                    if no_improv == no_learning_in:
-                        print("No improvment!")
-                        eta /= 2.0
+                if hyper_improve:
+                    if match > max_match:
+                        max_match = match
                         no_improv = 0
-                        if eta <= min_eta:
-                            return cost, q + 1
-                print(f"Epoch #{q+1}: {match * 100 / n}% Winner: {max_match * 100 / n}%")
+                    else:
+                        no_improv += 1
+                        if no_improv == no_learning_in:
+                            print("No improvment!")
+                            eta /= 2.0
+                            no_improv = 0
+                            if eta <= min_eta:
+                                return cost, q + 1
+                    print(f"Epoch #{q+1}: {match * 100 / n}% Winner: {max_match * 100 / n}%")
+                else:
+                    print(f"Epoch #{q+1}: {match * 100 / n}%")
             else:
                 print(f"Finished epoch #{q}")
 
@@ -172,25 +180,25 @@ if __name__ == "__main__":
     # load_data: raw_data -> train, values, test; assumes file path (string!) of pickled gz
     train, valid, test = load_data("mnist.pkl.gz")
 
-    net = Network([784, 30, 10])
+    # net = Network([784, 100, 10])
 
-    end_cost, num_epochs = net.fit(train, eta=0.5, lmbda=5.0, epochs=10000, mini_batch_size=10, evaluation_data=valid)
+    # end_cost, num_epochs = net.fit(train, eta=0.5, lmbda=3.0, mu=0.75, epochs=50, mini_batch_size=10, evaluation_data=valid, hyper_improve=True, no_learning_in=6, min_eta=16.0)
 
-    save_network(net)
+    # save_network(net)
 
-    plt.figure()
-    plt.plot(np.arange(0, num_epochs), end_cost)
-    # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
-    plt.show()
+    # plt.figure()
+    # plt.plot(np.arange(0, num_epochs), end_cost)
+    # # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
+    # plt.show()
 
-    # # old_net = load_network("NeuralNetwork.pkl")
-    # best_net = load_network("BestNetwork.json")
+    # old_net = load_network("NeuralNetwork.json")
+    best_net = load_network("BestNetwork.json")
 
-    # # match_o , n = old_net.evaluate(test)
-    # match_b , n = best_net.evaluate(test)
+    # match_o , n = old_net.evaluate(test)
+    match_b , n = best_net.evaluate(test)
 
-    # # print(f"Old: {match_o} / {n}")
-    # print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
+    # print(f"Old: {match_o * 100 / n}%")
+    print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
 
     # guess = old_net.feedforward(test[58][0])
 
