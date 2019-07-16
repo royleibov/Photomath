@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import pickle
 import gzip
 import random
+import json
 
 def load_data(path):
     # Unpickle data
@@ -26,7 +27,9 @@ class Network:
         self.layers = layers
         # Randomize weights and biases: by given 'layers' input
         # corosponding to each layer apart from input
-        self.weights = [np.random.randn(y, x) for x, y in zip(layers[:-1], layers[1:])]
+
+        self.weights = [np.random.randn(y, x) / np.sqrt(x) for x, y in zip(layers[:-1], layers[1:])]
+
         self.biases = [np.random.randn(y, 1) for y in layers[1:]]
     
     def feedforward(self, a):
@@ -35,8 +38,10 @@ class Network:
 
         return a
 
-    def fit(self, train, eta, epochs, mini_batch_size, test_data=None):
+    def fit(self, train, eta, lmbda, epochs, mini_batch_size, evaluation_data=None, no_learning_in = 10):
         cost = []
+        max_match = 0
+        no_improv = 0
         for q in range(epochs):
             random.shuffle(train)
             epoch_cost = []
@@ -72,10 +77,11 @@ class Network:
                     delta_weights = []
                     delta_biases = []
 
-                    loss = 0.5 * np.sum(error**2)
+                    loss = np.sum(np.nan_to_num(-y * np.nan_to_num(np.log(guess)) - (1 - y) * np.nan_to_num(np.log(1 - guess))))
                     epoch_cost.append(loss)
 
-                    derv = error * (x[-1] * (1 - x[-1]))
+                    derv = error
+
                     delta_biases.append(derv)
                     delta_weights.append(np.dot(derv, x[-2].T))
 
@@ -92,22 +98,33 @@ class Network:
                     delta_weights_sum = [nw+ow for nw, ow in zip(delta_weights, delta_weights_sum)]
                     delta_biases_sum = [nb+ob for nb, ob in zip(delta_biases, delta_biases_sum)]
 
+
                 # 'Nudge' the weights and biases by the gradient descent
                 # (dividing by the mini_batch_size to average the deltas)
-                self.weights = [w - (eta/mini_batch_size) * delta_weights_sum[j] for j, w in enumerate(self.weights)]
+                self.weights = [w * (1 - lmbda * eta / n) - (eta / mini_batch_size) * delta_weights_sum[j] for j, w in enumerate(self.weights)]
+
                 self.biases = [b - (eta/mini_batch_size) * delta_biases_sum[j] for j, b in enumerate(self.biases)]
             
             # Remember the cost
             cost.append(np.average(epoch_cost))
 
             # Print the current stage of the network
-            if test_data:
-                match, n = self.evaluate(test_data)
-                print(f"Epoch #{q+1}: {match} / {n}")
+
+            if evaluation_data:
+                match, n = self.evaluate(evaluation_data)
+                if match > max_match:
+                    max_match = match
+                    no_improv = 0
+                else:
+                    no_improv += 1
+                    if no_improv == no_learning_in:
+                        epoched = q + 1
+                        return cost, epoched
+                print(f"Epoch #{q+1}: {match * 100 / n}%")
             else:
                 print(f"Finished epoch #{q}")
 
-        return cost
+        return cost, epochs
 
     def evaluate(self, test):
         n = len(test)
@@ -123,13 +140,21 @@ class Network:
 
 
 def save_network(NN):
-    with open("NeuralNetwork.pkl", "wb") as net_file:
-        pickle.dump(NN, net_file)
+    data = {
+        "layers": NN.layers,
+        "weights": [w.tolist() for w in NN.weights],
+        "biases": [b.tolist() for b in NN.biases]
+    }
+    with open("NeuralNetwork.json", "w") as net_file:
+        json.dump(data, net_file)
 
 
 def load_network(file):
-    with open(file, "rb") as net_file:
-        net = pickle.load(net_file)
+    with open(file, "r") as net_file:
+        data = json.load(net_file)
+    net = Network(data["layers"])
+    net.weights = [np.array(w) for w in data["weights"]]
+    net.biases = [np.array(b) for b in data["biases"]]
 
     return net
         
@@ -145,22 +170,22 @@ if __name__ == "__main__":
 
     # net = Network([784, 30, 10])
 
-    # end_cost = net.fit(train, 3.0, epochs=30, mini_batch_size=10, test_data=test)
+    # end_cost, num_epochs = net.fit(train, eta=0.5, lmbda=5.0, epochs=100, mini_batch_size=10, evaluation_data=valid)
 
     # save_network(net)
 
     # plt.figure()
-    # plt.plot(np.arange(0, 30), end_cost)
+    # plt.plot(np.arange(0, num_epochs), end_cost)
     # # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
     # plt.show()
 
-    # old_net = load_network("NeuralNetwork.pkl")
-    best_net = load_network("BestNetwork.pkl")
+    # # old_net = load_network("NeuralNetwork.pkl")
+    best_net = load_network("BestNetwork.json")
 
-    # match_o , n = old_net.evaluate(test)
+    # # match_o , n = old_net.evaluate(test)
     match_b , n = best_net.evaluate(test)
 
-    # print(f"Old: {match_o} / {n}")
+    # # print(f"Old: {match_o} / {n}")
     print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
 
     # guess = old_net.feedforward(test[58][0])
