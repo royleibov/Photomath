@@ -161,25 +161,25 @@ if __name__ == "__main__":
     # load_data: raw_data -> train, values, test; assumes file path (string!) of pickled gz
     train, valid, test = load_data("mnist.pkl.gz")
 
-    net = Network([784, 30, 10])
+    # net = Network([784, 30, 10])
 
-    end_cost, num_epochs = net.fit(train, eta=0.5, lmbda=5.0, epochs=100, mini_batch_size=10, evaluation_data=valid)
+    # end_cost, num_epochs = net.fit(train, eta=0.5, lmbda=5.0, epochs=100, mini_batch_size=10, evaluation_data=valid)
 
-    save_network(net)
+    # save_network(net)
 
-    plt.figure()
-    plt.plot(np.arange(0, num_epochs), end_cost)
-    # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
-    plt.show()
+    # plt.figure()
+    # plt.plot(np.arange(0, num_epochs), end_cost)
+    # # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
+    # plt.show()
 
     # # old_net = load_network("NeuralNetwork.pkl")
-    # best_net = load_network("BestNetwork.pkl")
+    best_net = load_network("BestNetwork.json")
 
     # # match_o , n = old_net.evaluate(test)
-    # match_b , n = best_net.evaluate(test)
+    match_b , n = best_net.evaluate(test)
 
     # # print(f"Old: {match_o} / {n}")
-    # print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
+    print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
 
     # guess = old_net.feedforward(test[58][0])
 

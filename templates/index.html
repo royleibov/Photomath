@@ -22,7 +22,7 @@
                 <canvas id="canvas" width="280" height="280"></canvas>
             </div>
             <div class="middle">
-                <input id="recognize" value="recognize" type="button" style="top: 30%" onclick="captureCanvas()">
+                <input id="recognize" value="recognize" type="button" style="top: 30%">
                 <input id="clear" type="button" value="Clear" style="top: 50%">
             </div>
             <div class="right">
@@ -31,5 +31,19 @@
         </div>
 
         <script src="/static/script.js"></script>
+        <script type="text/javascript">
+            $('#recognize').click(function(){
+	   			let canvasObj = document.getElementById("canvas");
+	   			let img = canvasObj.toDataURL('image/png');
+	   			$.ajax({
+	   				type: "POST",
+	   				url: "/recognize",
+                    data: img,
+                    success: function(data) {
+                        $('#num').text(data);
+                    }
+	   			});
+	   		});
+        </script>
     </body>
 </html>
