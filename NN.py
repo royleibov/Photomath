@@ -81,7 +81,7 @@ class Network:
                     delta_weights = []
                     delta_biases = []
 
-                    loss = np.sum(np.nan_to_num(-y * np.nan_to_num(np.log(guess)) - (1 - y) * np.nan_to_num(np.log(1 - guess))))
+                    loss = np.sum(np.nan_to_num(-y * np.log(guess) - (1 - y) * np.log(1 - guess)))
                     epoch_cost.append(loss)
 
                     derv = error
