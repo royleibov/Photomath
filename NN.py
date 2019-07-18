@@ -188,20 +188,27 @@ if __name__ == "__main__":
 
     # plt.figure()
     # plt.plot(np.arange(0, num_epochs), end_cost)
-    # # plt.imshow(test[637][0].reshape(28,28), cmap='gray')
+    # plt.imshow(test[58][0].reshape(28,28), cmap='gray')
+    # plt.title(f"Number is: {np.argmax(test[58][1])} Guess is: {np.argmax(guess)}")
     # plt.show()
 
     # old_net = load_network("NeuralNetwork.json")
     best_net = load_network("BestNetwork.json")
 
     # match_o , n = old_net.evaluate(test)
-    match_b , n = best_net.evaluate(test)
+    # match_b , n = best_net.evaluate(test)
 
     # print(f"Old: {match_o * 100 / n}%")
-    print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
+    # print(f"Best: {match_b} / {n} {match_b * 100 / n}%")
 
-    # guess = old_net.feedforward(test[58][0])
+    guess = best_net.feedforward(test[51][0])
 
     # print(f"Guess: {np.argmax(guess)}")
     # print(guess)
     # print(f"Number: {np.argmax(test[58][1])}")
+
+    plt.figure()
+    # plt.plot(np.arange(0, num_epochs), end_cost)
+    plt.imshow(test[51][0].reshape(28,28), cmap='gray')
+    plt.title(f"Number is: {np.argmax(test[51][1])} Guess is: {np.argmax(guess)}")
+    plt.show()
